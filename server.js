@@ -6,14 +6,16 @@
 //  ==========================================  CONSTANTS   =================================================================
 //const dotenv = require('dotenv').config()
 const express = require('express');
-const cors = require('cors');
-const session = require('express-session');
+require('dotenv').config();
+// const cors = require('cors');
+// const session = require('express-session');
 const app = express();
-const HOST = '0.0.0.0'; // Bind to all IP addresses
-const port = process.env.PORT || 3001;
-const securedRoutes = require('./routes/securedRoutes');
-const testRouter = require('./routes/testroutes.js')
-const systemroutes = require('./routes/systemroutes.js')
+const HOST = 'localhost'; // Bind to all IP addresses
+const port = process.env.PORT || 3009;
+console.log(port)
+// const securedRoutes = require('./routes/securedRoutes');
+// const testRouter = require('./routes/testroutes.js')
+// const systemroutes = require('./routes/systemroutes.js')
 //const SERVER_START_TIME = Date.now()  // capture the servers start time :TODO
 //  Configure HTTPs
 const https = require('https');
@@ -22,27 +24,27 @@ const path = require('path');
 const { userInfo } = require('os');
 
 // ======================================================================================================================
-const { login, register } = require('./routes/Authenticator.js');
+// const { login, register } = require('./routes/Authenticator.js');
 const db = require('./db/db.js');
 let NUMBER_OF_CONNECTIONS = 0 // This var is used to track the number of attempts to the API. TODO: ok to remove this in prod
 //  CORS:
 //  Get the allowed cors origins from the .env file
 //console.log("here is the cors list",process.env.CORS_ORIGINS_DEV.split(','))
 //  Get the allowed cors origins from the .env file
-const corsOrigins = process.env.NODE_ENV === 'development' ? process.env.CORS_ORIGINS_DEV.split(',') : process.env.CORS_ORIGINS_PROD.split(',');
+// const corsOrigins = process.env.NODE_ENV === 'development' ? process.env.CORS_ORIGINS_DEV.split(',') : process.env.CORS_ORIGINS_PROD.split(',');
 //      ========================  CORS =====================================================================================================
-const corsOptions = {
-    origin: function (origin, callback) {
-        if (corsOrigins.indexOf(origin) !== -1 || !origin) {
-            callback(null, true);
-        } else {
-            console.log(corsOrigins, origin)
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
-    credentials: true, // Allow credentials (cookies) to be sent
-};
-app.use(cors(corsOptions));
+// const corsOptions = {
+//     origin: function (origin, callback) {
+//         if (corsOrigins.indexOf(origin) !== -1 || !origin) {
+//             callback(null, true);
+//         } else {
+//             console.log(corsOrigins, origin)
+//             callback(new Error('Not allowed by CORS'));
+//         }
+//     },
+//     credentials: true, // Allow credentials (cookies) to be sent
+// };
+// app.use(cors(corsOptions));
 //      ====================================================================================================================================
 // Middleware to parse JSON and URL-encoded data
 app.use(express.json()); // For parsing application/json
@@ -55,24 +57,24 @@ app.use(express.urlencoded({ extended: true })); // For parsing application/x-ww
 /*
     Configure EXPRESS SESSIONS MANAGEMENT  ===============================================================================================
 */
-app.use(session({
-    secret: process.env.SECRET_KEY,
-    resave: false,
-    saveUninitialized: true,
-    httpOnly: true, // Prevent JavaScript access to the cookie
-    cookie: {
-        maxAge: 36000000, // Session expires after 1 hour (in milliseconds)
-        secure: true, // Set to true in a production environment if using HTTPS
-        sameSite: 'none', // Required for cross-origin cookies        
-    },
-    //store: sessionStore //TODO:Implement
-}));
+// app.use(session({
+//     secret: process.env.SECRET_KEY,
+//     resave: false,
+//     saveUninitialized: true,
+//     httpOnly: true, // Prevent JavaScript access to the cookie
+//     cookie: {
+//         maxAge: 36000000, // Session expires after 1 hour (in milliseconds)
+//         secure: true, // Set to true in a production environment if using HTTPS
+//         sameSite: 'none', // Required for cross-origin cookies        
+//     },
+//     //store: sessionStore //TODO:Implement
+// }));
 //  =======================================================================================================================================
 // Serve static files from the 'public' directory // TODO: REMOVE THIS ABILITY
-app.use(express.static('public'));
+// app.use(express.static('public'));
 // Error handling middleware
 
-app.set('trust proxy', true); // Or a more specific configuration depending on your setup
+// app.set('trust proxy', true); // Or a more specific configuration depending on your setup
 
 app.use((req, res, next) => {
     const clientIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress;
@@ -102,11 +104,11 @@ app.use((err, req, res, next) => {
     res.status(500).send('Something broke!', req.data, userInfo);
 });
 
-app.use('/secure', securedRoutes);
-if (process.env.NODE_ENV = 'development') {
-    app.use('/test', testRouter)
-}
-app.use('/system', systemroutes);
+// app.use('/secure', securedRoutes);
+// if (process.env.NODE_ENV = 'development') {
+//     app.use('/test', testRouter)
+// }
+// app.use('/system', systemroutes);
 
 // Usage
 /*
@@ -114,7 +116,7 @@ app.use('/system', systemroutes);
 */
 // Landing default route message for the root route // TODO: Consider removing
 app.get('/', (req, res) => {
-    if (req.session.user) {  // If it is TRUE then this user is authenticated 
+    if (req.session) {  // If it is TRUE then this user is authenticated 
         res.redirect('/test');
     } else {
         res.sendFile(__dirname + '/public/login.html');
@@ -123,21 +125,21 @@ app.get('/', (req, res) => {
 
 
 // Handle login requests
-app.post('/login', login);
-app.get('/login', (req, res) => { // TODO: Consider removing
-    console.log("I am from the /app.get login")
-})
-app.post('/logout', (req, res, next) => {
-    req.session.destroy((err) => {
-        if (err) {
-            res.status(500).json({ success: false, message: 'Session could not be destroyed' })
-        } else {
-            //console.log("SUCCESSFUL LOGOUT")
-            res.json({ success: true, message: 'Logout successfull' })
-        }
-    });
-});
-app.post('/register', register) // get the registration page
+// app.post('/login', login);
+// app.get('/login', (req, res) => { // TODO: Consider removing
+//     console.log("I am from the /app.get login")
+// })
+// app.post('/logout', (req, res, next) => {
+//     req.session.destroy((err) => {
+//         if (err) {
+//             res.status(500).json({ success: false, message: 'Session could not be destroyed' })
+//         } else {
+//             //console.log("SUCCESSFUL LOGOUT")
+//             res.json({ success: true, message: 'Logout successfull' })
+//         }
+//     });
+// });
+// app.post('/register', register) // get the registration page
 
 /*
 
@@ -159,6 +161,9 @@ function getDurationInMilliseconds(start) {
 //  ========================================================================================================================================
 
 // Configure HTTPS server with the self-signed certificate
+
+const serverUrl = `https://${HOST}:${port}`;
+console.log(`Server is running at: ${serverUrl}`);
 const httpsOptions = {
     key: fs.readFileSync(path.join(__dirname, 'server.key')),
     cert: fs.readFileSync(path.join(__dirname, 'server.cer'))
